@@ -56,6 +56,10 @@ const UserSchema = new Schema({
     ref_node:{
         type:String,
     },
+    ref_upiId:{
+        type:String,
+        default:"1"
+    },
     ref_node_code:{
        type:Number,
     },

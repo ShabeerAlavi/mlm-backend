@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -26,6 +27,83 @@ const router = express.Router();
 //     console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 //     res.send("hiiii")
 // })
+
+
+
+router.post('/addnode', async (req, res) => {
+    const { userId } = req.body;
+    const newNodeId = await getNextNodeId(); // Get the next available nodeId
+  
+    console.log("welcome to addnote")
+    // Validation (customize as needed)
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        console.log("!userId")
+      return res.status(400).send({ message: 'Invalid request data' });
+    }
+  
+    try {
+      // Find the first document with isMaturedNode: false
+      const firstNonMaturedNode = await Nodelist.findOne({ isMaturedNode: false });
+      console.log("firstNonMaturedNode" ,firstNonMaturedNode )
+      if (!firstNonMaturedNode) {
+        return res.status(400).send({ message: 'No non-matured nodes found' });
+      }
+  
+      const { ref_node, ref_node_code, upiId } = firstNonMaturedNode;
+  
+      // Update maturedNode of the first non-matured node
+      firstNonMaturedNode.maturedNode.push(newNodeId);
+      if (firstNonMaturedNode.maturedNode.length === 2) {
+        firstNonMaturedNode.isMaturedNode = true;
+      }
+  
+      await firstNonMaturedNode.save();
+  
+      // Create the new Nodelist document
+      const newDocument = new Nodelist({
+        userId:userId,
+        ref_node:ref_node,
+        isMaturedNode: false, // Set true for initial creation
+        maturedNode: [],
+        ref_node_code: ref_node_code,
+        dateCreated: new Date(),
+        nodeId: newNodeId,
+        nodeSl:newNodeId-1000,
+        ref_upiId: upiId
+      });
+  
+      const savedNode = await newDocument.save();
+      console.log("save",savedNode)
+      const userData= await User.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(userId)  },
+        { $set: { firstPaymentStatus: true,  ref_upiId: upiId } },
+        { new: true } 
+        ).then(()=> res.status(201).send(savedNode))
+      // Send created document
+    } catch (err) {
+      console.error(err); // Log error for debugging
+      res.status(500).send({ message: 'Error adding Nodelist' });
+    }
+  });
+
+  async function getNextNodeId() {
+    console.log(" getNextNodeId")
+    try {
+      const lastNode = await Nodelist.findOne().sort({ nodeId: -1 }).limit(1);
+      if (lastNode) {
+        console.log(lastNode.nodeId + 1," ---NextNodeId")
+        return lastNode.nodeId + 1;
+      } else {
+        console.log("1001---NextNodeId")
+        return 1001; // Start from 1001 if no Nodelist documents exist
+      }
+    } catch (err) {
+      console.error('Error retrieving last nodeId:', err);
+      throw err; // Re-throw the error for handling in the controller
+    }
+  }
+
+
 router.post('/register', (req, res) => {
     console.log("regis**********************")
     // const { errors, isValid } = validateRegisterInput(req.body);
@@ -90,65 +168,39 @@ router.post('/register', (req, res) => {
 // @access Private
 router.post('/login', (req, res) => {
     console.log("regis*******************loggggggggggggggggggg***",req.body)
-    const { errors, isValid } = validateLoginInput(req.body);
-
-    if (!isValid) {
-        return res.status(400).json(errors);
-    }
-
-    const username = req.body.username;
+    const email = req.body.email;
     const password = req.body.password;
+    const data={};
 
-    User.findOne({ username })
+    User.findOne({ email })
         .then(user => {
             if (!user) {
-                errors.username = 'User not found!';
-                res.status(404).json(errors);
+                console.log("not user")
+                data.status = 404;
+                data.errors = 'Email/password not found';
+                res.status(404).json(data);
             }
 
+console.log(password, user.password,"pppp")
             bcrypt.compare(password, user.password)
                 .then(isMatch => {
+                    console.log(isMatch,"is match vavvv")
                     if (isMatch) {
-                        Profile.findOne({ user: user.id })
-                            .then(profile => {
-                                const payload = {
-                                    id: user.id,
-                                    firstName: user.firstName,
-                                    lastName: user.lastName,
-                                    username: user.username,
-                                    email: user.email,
-                                    dateCreated: user.dateCreated,
-                                    lastSeen: user.lastSeen,
-                                    phone: user.phone,
-                                    balance: profile.balance,
-                                    totalEarnings: profile.totalEarnings,
-                                    gamesPlayed: profile.gamesPlayed,
-                                    rank: profile.rank,
-                                    rankPercentage: profile.rankPercentage,
-                                    wins: profile.wins,
-                                    losses: profile.losses,
-                                    bank: profile.bank,
-                                    accountName: profile.accountName,
-                                    accountNumber: profile.accountNumber,
-                                    cardNumber: profile.cardNumber,
-                                    cardName: profile.cardName,
-                                    cvv: profile.cvv,
-                                    cardExp: profile.cardExp
-
-                                }; // JWT Payload
-        
-                                // Sign the token
-                                jwt.sign(payload, keys.secretOrKey, { expiresIn: '30 days' }, (err, token) => {
-                                    res.json({
-                                        success: true,
-                                        token: `Bearer ${token}`
-                                    });
-                                });
-                            })
-                            .catch(err => console.log(err));
+                        console.log("is match")
+                        data.data=user;
+                    // Sign the token
+                    jwt.sign(user, keys.secretOrKey, { expiresIn: '30 days' }, (err, token) => {
+                        res.json({
+                            status :200,
+                            data:data,
+                            token: `Bearer ${token}`
+                        });
+                    });        
                     } else {
-                        errors.password = 'Password incorrect!';
-                        return res.status(401).json(errors)
+                        console.log("is match else")
+                        data.status = 404;
+                        data.errors = 'Email/password not found';
+                        res.status(404).json(data);
                     }
                 })
                 .catch(err => console.log(err));
@@ -156,6 +208,25 @@ router.post('/login', (req, res) => {
         .catch(err => {});
 });
 
+router.get('/gu/:userId', (req, res) => {
+    console.log("regis*******************loggggggggggggggggggg***",req.body)
+    const userId = req.params.userId;
+    const data={};
+
+    User.findOne({ _id: new mongoose.Types.ObjectId(userId)  },)
+        .then(user => {
+                        data.data=user;
+                        res.json({
+                            status :200,
+                            data:data,
+                            // token: `Bearer ${token}`
+                        });
+                    // Sign the token
+                   
+                })
+                .catch(err => console.log(err));
+        })
+    
 // Change password
 // @route POST /api/users/changePassword
 // @desc change user password
