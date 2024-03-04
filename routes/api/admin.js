@@ -11,11 +11,41 @@ const validateChangeAdminPassword = require('../../utils/validation/changePasswo
 const validateRegisterAdmin = require('../../utils/validation/registerAdmin');
 
 const Admin = require('../../models/Admin');
+const Nodelist = require('../../models/Nodelist');
+const Infodata = require('../../models/Infodata');
+
 
 // Register new admin
 // @route POST /api/admin/register
 // @desc register admin
 // @access Public
+
+router.get('/cmp', async(req, res) => {
+    console.log("admin*******cmp***")
+   
+    try {
+        const infoData = await Infodata.find();
+        res.status(200).json({ data: infoData }); // Send the array of users
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' }); // Generic error for security
+      }
+
+   
+        })
+router.get('/nl', async(req, res) => {
+    console.log("admin*******nl***")
+   
+    try {
+        const nodelist = await Nodelist.find();
+        res.status(200).json({ data: nodelist }); // Send the array of users
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' }); // Generic error for security
+      }
+
+   
+        })
 router.post('/register', (req, res) => {
     const { errors, isValid } = validateRegisterAdmin(req.body);
 

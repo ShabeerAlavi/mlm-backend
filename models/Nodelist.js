@@ -7,6 +7,12 @@ const NodelistSchema = new Schema({
     ref: 'users',
     required: true, // Ensure a user is associated
   },
+  name:{
+    type:String
+  },
+  mobile:{
+    type: String,
+  },
   nodeId: {
     type: Number,
     // required: true,

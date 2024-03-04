@@ -31,7 +31,9 @@ const router = express.Router();
 
 
 router.post('/addnode', async (req, res) => {
-    const { userId } = req.body;
+    const { userId,mobile } = req.body;
+    const user_upi=req.body.upiId;
+    const user_name=req.body.name;
     const newNodeId = await getNextNodeId(); // Get the next available nodeId
   
     console.log("welcome to addnote")
@@ -49,7 +51,7 @@ router.post('/addnode', async (req, res) => {
         return res.status(400).send({ message: 'No non-matured nodes found' });
       }
   
-      const { ref_node, ref_node_code, upiId } = firstNonMaturedNode;
+      const { name, ref_node_code, upiId } = firstNonMaturedNode;
   
       // Update maturedNode of the first non-matured node
       firstNonMaturedNode.maturedNode.push(newNodeId);
@@ -62,7 +64,10 @@ router.post('/addnode', async (req, res) => {
       // Create the new Nodelist document
       const newDocument = new Nodelist({
         userId:userId,
-        ref_node:ref_node,
+        name:user_name,
+        mobile:mobile,
+        upiId:user_upi,
+        ref_node:name,
         isMaturedNode: false, // Set true for initial creation
         maturedNode: [],
         ref_node_code: ref_node_code,
@@ -76,7 +81,7 @@ router.post('/addnode', async (req, res) => {
       console.log("save",savedNode)
       const userData= await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true,  ref_upiId: upiId } },
+        { $set: { firstPaymentStatus: true,  ref_upiId: upiId,upiId:user_upi,ref_node:name } },
         { new: true } 
         ).then(()=> res.status(201).send(savedNode))
       // Send created document

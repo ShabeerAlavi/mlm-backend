@@ -19,6 +19,7 @@ const UserSchema = new Schema({
     },
     UpiId: {
         type: String,
+        default:"upi"
     },
     ifsc: {
         type: String,
