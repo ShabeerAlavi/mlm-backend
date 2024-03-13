@@ -186,18 +186,19 @@ router.post('/login', (req, res) => {
                 res.status(404).json(data);
             }
 
-console.log(password, user.password,"pppp")
+    //console.log(password, user.password,"pppp")
             bcrypt.compare(password, user.password)
                 .then(isMatch => {
                     console.log(isMatch,"is match vavvv")
                     if (isMatch) {
-                        console.log("is match")
+                       // console.log("is match")
                         data.data=user;
                     // Sign the token
-                    jwt.sign(user, keys.secretOrKey, { expiresIn: '30 days' }, (err, token) => {
+                    jwt.sign({payload:user}, keys.secretOrKey, { expiresIn: '30 days' }, (err, token) => {
+                        data.token=token;
                         res.json({
                             status :200,
-                            data:data,
+                            data:{data},
                             token: `Bearer ${token}`
                         });
                     });        
