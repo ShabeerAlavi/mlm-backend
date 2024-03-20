@@ -13,6 +13,8 @@ const validateRegisterAdmin = require('../../utils/validation/registerAdmin');
 const Admin = require('../../models/Admin');
 const Nodelist = require('../../models/Nodelist');
 const Infodata = require('../../models/Infodata');
+const CmpPayment=require("../../models/cmppayments");
+
 
 
 // Register new admin
@@ -32,6 +34,20 @@ router.get('/cmp', async(req, res) => {
       }
 
    
+        }) 
+
+router.get('/approve', async(req, res) => {
+    console.log("admin*******apppppppp***")
+    
+    try {
+        const cmpPayment = await CmpPayment.find({payment_status:"requsted"});
+        res.status(200).json({ data: cmpPayment }); // Send the array of users
+        } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' }); // Generic error for security
+        }
+
+    
         })
 router.get('/nl', async(req, res) => {
     console.log("admin*******nl***")

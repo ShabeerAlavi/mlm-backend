@@ -3,6 +3,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const path = require('path');
 // const Ravepay = require('ravepay');
 
 const keys = require('../../config/keys');
@@ -16,24 +17,107 @@ const User = require('../../models/Users');
 const Profile = require('../../models/Profile');
 const Nodelist = require('../../models/Nodelist');
 const Infodata = require('../../models/Infodata');
+const CmpPayment=require("../../models/cmppayments");
+// const { upload } = require('../../server');
+
+
+
 
 const router = express.Router();
 
-// Register new user
-// @route POST /api/users/register
-// @desc register user
-// @access Public
-// router.get('/',(req,res)=>{
-//     console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-//     res.send("hiiii")
-// })
 
 
-
-router.post('/addnode', async (req, res) => {
-    const { userId,mobile } = req.body;
+////first payment
+router.post('/fpay', async (req, res) => {
+    const { userId,mobile,cmp_upi, } = req.body;
     const user_upi=req.body.upiId;
     const user_name=req.body.name;
+    const payment_status=req.body.payment_status;
+    // const imageSrc = req.body.imgUri;
+    console.log("welcome to fpay")
+    // Validation (customize as needed)
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        console.log("!userId")
+      return res.status(400).send({ message: 'Invalid request data' });
+    }
+
+    try {  
+      const newPay= new CmpPayment({
+        userId: userId,
+        name:user_name,
+        mobile: mobile,
+        upiId:user_upi,
+        payment_status: payment_status,
+        paymentDetails:[
+            {
+                payment_amount: 500,
+                payment_date:new Date(),
+                cmp_upi: cmp_upi,
+                payment_try:1
+            }
+        ]
+       
+      })
+  
+      await newPay.save()
+
+
+       await User.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(userId)  },
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"requested"} },
+        { new: true } 
+        ).then(async ()=>  {
+            const file = req.files.imgUri;
+            const uploadPath = path.join(__dirname, '../uploads',userId+".png" );
+            await file.mv(uploadPath);
+            res.status(200).send("waiting for admin approval")
+        })
+      // Send created document
+    } catch (err) {
+      console.error(err); // Log error for debugging
+      res.status(500).send({ message: 'Error adding Nodelist' });
+    }
+  });
+
+router.post('/rejCmp', async (req, res) => {
+    const { userId,mobile,cmp_upi, } = req.body;
+    const user_upi=req.body.upiId;
+    const user_name=req.body.name;
+    const payment_status=req.body.payment_status;
+    // const imageSrc = req.body.imgUri;
+    console.log("rejCmprejCmprejCmp")
+    // Validation (customize as needed)
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        console.log("!userId")
+      return res.status(400).send({ message: 'Invalid request data' });
+    }
+
+    try {  
+       await User.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(userId)  },
+        { $set: { firstPaymentStatus: false, firstPaymentApprovel:"rejected"} },
+        { new: true } 
+        ).then(async ()=>  {
+            await CmpPayment.findOneAndUpdate(
+                { userId: new mongoose.Types.ObjectId(userId)  },
+                { $set: { payment_status:"rejected"} },
+                { new: true } 
+                ).then(()=> res.status(201).send("admin rejected"))
+        })
+      // Send created document
+    } catch (err) {
+      console.error(err); // Log error for debugging
+      res.status(500).send({ message: 'Error adding Nodelist' });
+    }
+  });
+
+///second payment api
+
+router.post('/addnode', async (req, res) => {
+    const { userId,mobile ,payment_status} = req.body;
+    const user_upi=req.body.upiId;
+    const user_name=req.body.name;
+    
     const newNodeId = await getNextNodeId(); // Get the next available nodeId
   
     console.log("welcome to addnote")
@@ -81,9 +165,15 @@ router.post('/addnode', async (req, res) => {
       console.log("save",savedNode)
       const userData= await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true,  ref_upiId: upiId,upiId:user_upi,ref_node:name } },
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"approved", ref_upiId: upiId,upiId:user_upi,ref_node:name } },
         { new: true } 
-        ).then(()=> res.status(201).send(savedNode))
+        ).then(async()=> {
+            await CmpPayment.findOneAndUpdate(
+                { userId: new mongoose.Types.ObjectId(userId)  },
+                { $set: { payment_status:"approved" } },
+                { new: true } 
+                ).then(()=> res.status(201).send(savedNode))
+       })
       // Send created document
     } catch (err) {
       console.error(err); // Log error for debugging
@@ -215,7 +305,7 @@ router.post('/login', (req, res) => {
 });
 
 router.get('/gu/:userId', (req, res) => {
-    console.log("regis*******************loggggggggggggggggggg***",req.body)
+    console.log("regis*******guuuuuuuuuuuuuu************loggggggggggggggggggg***",req.body)
     const userId = req.params.userId;
     const data={};
 

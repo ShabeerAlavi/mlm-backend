@@ -38,6 +38,9 @@ const UserSchema = new Schema({
         type: Boolean,
         default: false
     },
+    firstPaymentApprovel:{
+        type: String,
+    },
     secondPaymentStatus:{
         type: Boolean,
         default: false
