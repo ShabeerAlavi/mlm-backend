@@ -70,6 +70,6 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}!`,path.join(__dirname, 'routes/uploads')));
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}!`));
 
 module.exports = { app, server };
