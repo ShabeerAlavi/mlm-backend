@@ -29,6 +29,15 @@ const NodelistSchema = new Schema({
   ref_upiId:{
     type: String,
   },
+  uMobile: {
+    type: String,
+  },
+  accNo: {
+    type: String,
+  },
+  ifsc: {
+    type: String,
+  },
   upiId: {
     type: String,
   },

@@ -29,7 +29,7 @@ const router = express.Router();
 
 ////first payment
 router.post('/fpay', async (req, res) => {
-    const { userId,mobile,cmp_upi, } = req.body;
+    const { userId,mobile,cmp_upi,accNo,ifsc,uMobile } = req.body;
     const user_upi=req.body.upiId;
     const user_name=req.body.name;
     const payment_status=req.body.payment_status;
@@ -46,7 +46,12 @@ router.post('/fpay', async (req, res) => {
         userId: userId,
         name:user_name,
         mobile: mobile,
+        accNo:accNo,
+        ifsc:ifsc,
+        uMobile:uMobile,
         upiId:user_upi,
+        accNo:accNo, ifsc:ifsc, 
+         uMobile:uMobile,
         payment_status: payment_status,
         paymentDetails:[
             {
@@ -64,7 +69,9 @@ router.post('/fpay', async (req, res) => {
 
        await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"requested"} },
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"requested", upiId:user_upi,
+        accNo:accNo, ifsc:ifsc, 
+         uMobile:uMobile } },
         { new: true } 
         ).then(async ()=>  {
             const file = req.files.imgUri;
@@ -135,7 +142,7 @@ router.post('/addnode', async (req, res) => {
         return res.status(400).send({ message: 'No non-matured nodes found' });
       }
   
-      const { name, ref_node_code, upiId } = firstNonMaturedNode;
+      const { name, nodeId, upiId,ifsc,uMobile,accNo } = firstNonMaturedNode;
   
       // Update maturedNode of the first non-matured node
       firstNonMaturedNode.maturedNode.push(newNodeId);
@@ -154,7 +161,7 @@ router.post('/addnode', async (req, res) => {
         ref_node:name,
         isMaturedNode: false, // Set true for initial creation
         maturedNode: [],
-        ref_node_code: ref_node_code,
+        ref_node_code: nodeId,
         dateCreated: new Date(),
         nodeId: newNodeId,
         nodeSl:newNodeId-1000,
@@ -165,7 +172,7 @@ router.post('/addnode', async (req, res) => {
       console.log("save",savedNode)
       const userData= await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"approved", ref_upiId: upiId,upiId:user_upi,ref_node:name } },
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"approved", ref_upiId: upiId,upiId:user_upi,ref_node:name,ref_node_code:nodeId }},
         { new: true } 
         ).then(async()=> {
             await CmpPayment.findOneAndUpdate(

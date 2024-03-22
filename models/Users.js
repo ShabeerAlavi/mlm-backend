@@ -12,7 +12,6 @@ const UserSchema = new Schema({
         required: true
 
     },
-
     mobile: {
         type: String,
         required:true
@@ -67,6 +66,18 @@ const UserSchema = new Schema({
     ref_node_code:{
        type:Number,
     },
+    ref_node_code:{
+        type:Number,
+     },
+     ref_accNo:{
+        type:Number,
+     },
+     ref_ifsc:{
+        type:String,
+     },
+     ref_uMobile:{
+        type:Number
+     },
     lastSeen: {
         type: Date
     }
