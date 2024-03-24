@@ -16,6 +16,9 @@ const CmppaymentsSchema = new Schema({
   upiId:{
     type:String
   },
+  accNo:{type:String},
+  ifsc:{type:String},
+  uMobile:{type:Number},
   payment_status:{
     type:String
   },

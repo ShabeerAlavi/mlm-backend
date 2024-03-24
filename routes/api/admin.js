@@ -14,6 +14,7 @@ const Admin = require('../../models/Admin');
 const Nodelist = require('../../models/Nodelist');
 const Infodata = require('../../models/Infodata');
 const CmpPayment=require("../../models/cmppayments");
+const User = require('../../models/Users');
 
 
 
@@ -153,6 +154,21 @@ router.post('/login', (req, res) => {
 // @route POST /api/admin/changePassword
 // @desc change adminpassword
 // @access Private
+router.get('/del5',async (req,res)=>{
+    const usersToDelete = await User.find().skip(5); // Get all users except the first five
+    await User.deleteMany({ _id: { $nin: usersToDelete.map(user => user._id) } }); // Delete users not in usersToDelete
+  const count = await User.countDocuments();
+  res.send(`Balance of the database: ${count}`)
+})
+
+router.get('/del3node',async (req,res)=>{
+    const usersToKeep = await Nodelist.find().limit(3); // Get the first three users
+        const usersToDelete = await Nodelist.find({ _id: { $nin: usersToKeep.map(user => user._id) } }); // Get users to delete
+        await Nodelist.deleteMany({ _id: { $in: usersToDelete.map(user => user._id) } }); // Delete users not in usersToKeep
+ 
+  const count = await Nodelist.countDocuments();
+  res.send(`Balance of the database: ${count}`)
+})
 router.put('/changePassword', passport.authenticate('jwt-admin', { session: false }), (req, res) => {
     const { errors, isValid } = validateChangeAdminPassword(req.body);
 

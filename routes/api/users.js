@@ -50,8 +50,6 @@ router.post('/fpay', async (req, res) => {
         ifsc:ifsc,
         uMobile:uMobile,
         upiId:user_upi,
-        accNo:accNo, ifsc:ifsc, 
-         uMobile:uMobile,
         payment_status: payment_status,
         paymentDetails:[
             {
@@ -69,9 +67,7 @@ router.post('/fpay', async (req, res) => {
 
        await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"requested", upiId:user_upi,
-        accNo:accNo, ifsc:ifsc, 
-         uMobile:uMobile } },
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"requested", UpiId:user_upi} },
         { new: true } 
         ).then(async ()=>  {
             const file = req.files.imgUri;
@@ -122,6 +118,9 @@ router.post('/rejCmp', async (req, res) => {
 
 router.post('/addnode', async (req, res) => {
     const { userId,mobile ,payment_status} = req.body;
+    const  user_accNo= req.body.accNo;
+    const  user_ifsc=req.body.ifsc;
+    const  user_uMobile=req.body.uMobile;
     const user_upi=req.body.upiId;
     const user_name=req.body.name;
     
@@ -158,6 +157,9 @@ router.post('/addnode', async (req, res) => {
         name:user_name,
         mobile:mobile,
         upiId:user_upi,
+        accNo:user_accNo,
+        ifsc:user_ifsc,
+        uMobile:user_uMobile,
         ref_node:name,
         isMaturedNode: false, // Set true for initial creation
         maturedNode: [],
@@ -172,7 +174,7 @@ router.post('/addnode', async (req, res) => {
       console.log("save",savedNode)
       const userData= await User.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(userId)  },
-        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"approved", ref_upiId: upiId,upiId:user_upi,ref_node:name,ref_node_code:nodeId }},
+        { $set: { firstPaymentStatus: true, firstPaymentApprovel:"approved", ref_upiId: upiId,UpiId:user_upi,ref_node:name,ref_node_code:nodeId,ref_accNo:accNo,ref_ifsc:ifsc,ref_uMobile:uMobile }},
         { new: true } 
         ).then(async()=> {
             await CmpPayment.findOneAndUpdate(

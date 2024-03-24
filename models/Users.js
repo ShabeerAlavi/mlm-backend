@@ -20,12 +20,9 @@ const UserSchema = new Schema({
         type: String,
         default:"upi"
     },
-    ifsc: {
-        type: String,
-    },
-    accountNumber: {
-        type: String,
-    },
+  accNo:{type:Number},
+  ifsc:{type:String},
+  uMobile:{type:Number},
     bankName: {
         type: String,
     },
@@ -70,7 +67,7 @@ const UserSchema = new Schema({
         type:Number,
      },
      ref_accNo:{
-        type:Number,
+        type:String,
      },
      ref_ifsc:{
         type:String,
